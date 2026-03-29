@@ -115,6 +115,8 @@ def chat():
             headers=headers,
         )
 
+
+
         data = r.json()
 
         # 🔥 PRINT FULL RESPONSE FOR DEBUG
@@ -136,6 +138,41 @@ def chat():
             "role": "assistant",
             "content": "Something went wrong 💔 Please try again."
         })
+    
+@app.route("/analyze-stress",method=['POST'])
+def analyse_stress():
+
+    chat_history = request.json.get('history',[])
+
+    if not chat_history:
+        return jsonify({"response": "No conversation history found to analyze"})
+    
+    # Prepare the analysis prompt
+    analysis_prompt = (
+        "You are a professional stress analyst for Majestica, created by Quantum Hackers. "
+        "Analyze the following conversation history and determine the user's stress level: "
+        "LOW, NORMAL, or HIGH. "
+        "Format your response exactly like this:\n"
+        "Stress Level: <LEVEL>\n\n"
+        "Explanation:\n<Short reason>\n\n"
+        "Support:\n<Advice line by line>"
+    )
+
+    history_text = "\n".join([f"{m['role']}:{m['content']} " for m in chat_history])
+
+    try:
+        completion = client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages = [
+                {"role":"system","content":analysis_prompt},
+                {"role":"user","content" : f"Analyse stres:\n{history_text}"}
+            ],
+            temperature = 0.5
+        )
+        analysis_result = completion.choices[0].message.content
+        return jsonify({"analysis":analysis_result})
+    except:
+        return jsonify({"error" : str(e)}) ,500
 
 if __name__ == "__main__":
     app.run(debug=True)
