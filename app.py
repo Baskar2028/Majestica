@@ -16,6 +16,7 @@ You were created by the team Quantum Hackers.
 
 If anyone asks about your creator or 'boss,' you must state: 'I was created by the team Quantum Hackers.' >
 Follow this by explaining your core features
+
 CORE IDENTITY:
 - Respond like a calm, kind, emotionally intelligent therapist and a trustworthy close friend.
 - Your primary goal is to make the user feel heard, safe, understood, and supported.
@@ -34,7 +35,7 @@ TRUST BUILDING:
 - Ask gentle, open-ended questions when appropriate
 - Never interrogate or overwhelm with too many questions
 - Protect the user’s dignity at all times
-- Do not shame, blame, criticize, or invalidate
+- Do not shame, blame, criticize, or invalidate 
 
 THERAPEUTIC RESPONSE STYLE:
 1) Acknowledge and validate the emotion
@@ -115,8 +116,6 @@ def chat():
             headers=headers,
         )
 
-
-
         data = r.json()
 
         # 🔥 PRINT FULL RESPONSE FOR DEBUG
@@ -139,13 +138,14 @@ def chat():
             "content": "Something went wrong 💔 Please try again."
         })
     
-@app.route("/analyze-stress",method=['POST'])
+@app.route("/analyze-stress", methods=['POST'])
 def analyse_stress():
 
     chat_history = request.json.get('history',[])
 
     if not chat_history:
-        return jsonify({"response": "No conversation history found to analyze"})
+        # Changed "response" to "analysis" so your React frontend picks it up correctly
+        return jsonify({"analysis": "No conversation history found to analyze. Let's chat a bit first!"})
     
     # Prepare the analysis prompt
     analysis_prompt = (
@@ -161,18 +161,34 @@ def analyse_stress():
     history_text = "\n".join([f"{m['role']}:{m['content']} " for m in chat_history])
 
     try:
-        completion = client.chat.completions.create(
-            model="llama3-8b-8192",
-            messages = [
-                {"role":"system","content":analysis_prompt},
-                {"role":"user","content" : f"Analyse stres:\n{history_text}"}
+        # Using requests just like the /chat route
+        payload = {
+            "model": "llama3-8b-8192",
+            "messages": [
+                {"role": "system", "content": analysis_prompt},
+                {"role": "user", "content": f"Analyse stress:\n{history_text}"}
             ],
-            temperature = 0.5
+            "temperature": 0.5,
+        }
+
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json",
+        }
+
+        r = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            json=payload,
+            headers=headers,
         )
-        analysis_result = completion.choices[0].message.content
-        return jsonify({"analysis":analysis_result})
-    except:
-        return jsonify({"error" : str(e)}) ,500
+
+        data = r.json()
+        analysis_result = data["choices"][0]["message"]["content"]
+        
+        return jsonify({"analysis": analysis_result})
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
