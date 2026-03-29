@@ -97,6 +97,11 @@ Then you MUST:
 
   (Each bullet MUST be on a new line — never inline.)
 
+  Give in newline like 
+  "1. Welcome
+   2. Hi and so on"
+   (example)
+
 # EMOJI RULE
 - Use only 1–2 soft, comforting emojis when appropriate (e.g., 🤍, 🌿, ✨).
 - Do NOT overuse emojis.
